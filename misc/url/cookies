@@ -1,0 +1,17 @@
+;; Emacs-W3 HTTP cookies file
+;; Automatically generated file!!! DO NOT EDIT!!!
+
+(setq url-cookie-storage
+ 'nil)
+(setq url-cookie-secure-storage
+ '((".facebook.com"
+  [url-cookie "fr" "1094iNizdRaHIuTdS.AWUZbWL3czn8hkkK3WnB78-yb30.Bdkl7g.oU.AAA.0.0.Bdkl71.AWXxoIHe" "Tue Sep 29 20:00:52 2020 GMT" "/" ".facebook.com" t]
+  [url-cookie "sb" "4F6SXa8Z5BB8PgWzi2cNa6lo" "Wed Sep 29 20:00:53 2021 GMT" "/" ".facebook.com" t]
+  [url-cookie "c_user" "100000021561283" "Tue Sep 29 20:00:53 2020 GMT" "/" ".facebook.com" t]
+  [url-cookie "xs" "29%3ACa3wnWbWmF0slw%3A2%3A1569873652%3A2129%3A6853" "Tue Sep 29 20:00:53 2020 GMT" "/" ".facebook.com" t]))
+)
+
+;; Local Variables:
+;; version-control: never
+;; no-byte-compile: t
+;; End:
