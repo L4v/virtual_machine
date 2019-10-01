@@ -63,7 +63,17 @@ typedef enum
    POS = 1 << 0, // P
    ZRO = 1 << 1, // N
    NEG = 1 << 2  // Z
-  } ConditionFlags;
+  } ConditionFlag;
+
+typedef enum
+  {
+   GETC = 0x20,  // Get char from keyboard, don't echo
+   OUT = 0x21,   // Output char
+   PUTS = 0x22,  // Output a word string
+   IN = 0x23,    // Get char from terminal, echo
+   PUTSP = 0x24, // Output a byte string
+   HALT = 0x25   // Halt the program
+  } TrapCode;
 
 global_variable uint16 Registers[NumberOfRegisters];
 
@@ -191,17 +201,33 @@ int main(void)
 	  }break;
 	case JSR:
 	  {
-	    // TODO(l4v): Implement
+	    // NOTE(l4v): Flag to check whether the base address is
+	    // located in the base register or from argument
+	    uint16 Flag = (Instruction & 0x0800);
+	    Registers[R7] = Registers[PC];
+	    if(Flag)
+	      {
+		// NOTE(l4v): Address loaded from argument
+		uint16 PCOffset = (Instruction & 0x07FF);
+		Registers[PC] += SignExtend(PCOffset, 11);
+	      }
+	    else
+	      {
+		// NOTE(l4v): Address loaded from base register
+		uint16 BaseReg = (Instruction & 0x01C0);
+		Registers[PC] = BaseReg;
+	      }
+	    
 	  }break;
 	case LD:
 	  {
-	    // TODO(l4v): Implement
+	    uint16 DestReg = (Instruction & 0x0E00);
+	    uint16 PCOffset = (Instruction & 0x01FF);
+	    PCOffset = SignExtend(PCOffset, 9);
+	    Registers[DestReg] = ReadMemory(Registers[PC] + PCOffset);
+	    UpdateFlags(Registers[DestReg]);
 	  }break;
 	case LDI:
-	  {
-	    // TODO(l4v): Implement
-	  }break;
-	case LDR:
 	  {
 	    uint16 DestReg = (Instruction & 0x0700);
 	    uint16 PCOffset = (Instruction & 0x01FF);
@@ -212,21 +238,44 @@ int main(void)
 						       PCOffset));
 	    UpdateFlags(Registers[DestReg]);
 	  }break;
+	case LDR:
+	  {
+	    uint16 DestReg = (Instruction & 0x0E00);
+	    uint16 BaseReg = (0x01C00);
+	    uint16 Offset = (Instruction & 0x003F);
+	    Offset = SignExtend(Offset, 6);
+	    Registers[DestReg] = ReadMemory(Registers[BaseReg] + Offset);
+	    UpdateFlags(Registers[DestReg]);
+	  }break;
 	case LEA:
 	  {
-	    // TODO(l4v): Implement
+	    uint16 DestReg = (Instruction & 0x0E00);
+	    uint16 PCOffset = (Instruction & 0x01FF);
+	    PCOffset = SignExtend(PCOffset, 9);
+	    Registers[DestReg] = Registers[PC] + PCOffset;
+	    UpdateFlags(Registers[DestReg]);
 	  }break;
 	case ST:
 	  {
-	    // TODO(l4v): Implement
+	    uint16 SrcReg = (Instruction & 0x0E00);
+	    uint16 PCOffset = (Instruction & 0x01FF);
+	    PCOffset = SignExtend(PCOffset, 9);
+	    WriteMemory(Registers[PC] + PCOffset, Registers[SrcReg]);
 	  }break;
 	case STI:
 	  {
-	    // TODO(l4v): Implement
+	    uint16 SrcReg = (Instruction & 0x0E00);
+	    uint16 PCOffset = (Instruction & 0x01FF);
+	    PCOffset = SignExtend(PCOffset, 9);
+	    WriteMemory(ReadMemory(Registers[PC] + PCOffset), Registers[SrcReg]);
 	  }break;
 	case STR:
 	  {
-	    // TODO(l4v): Implement
+	    uint16 SrcReg = (Instruction & 0x0E00);
+	    uint16 BaseReg = (Instruction & 0x01C0);
+	    uint16 PCOffset = (Instruction & 0x001F);
+	    PCOffset = SignExtend(PCOffset, 6);
+	    WriteMemory(Registers[BaseReg] + PCOffset, Registers[SrcReg]);
 	  }break;
 	case TRAP:
 	  {
@@ -237,6 +286,7 @@ int main(void)
 	default:
 	  {
 	    // NOTE(l4v): Bad OpCode
+	    abort();
 	  }break;
 	}
     }
