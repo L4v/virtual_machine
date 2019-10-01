@@ -70,6 +70,33 @@ global_variable uint16 Registers[NumberOfRegisters];
 global_variable int32* Program;
 global_variable int32* Memory;
 
+internal uint16
+SignExtend(uint16 X, int32 BitCount)
+{
+  if((X >> (BitCount - 1)) & 1)
+    {
+      X |= (0xFFFF << BitCount);
+    }
+  return X;
+}
+
+internal void
+UpdateFlags(uint16 Register)
+{
+  if(!Registers[Register])
+    {
+      Registers[COND] = ZRO;
+    }
+  else if(Registers[Register] >> 15)
+    {
+      Registers[COND] = NEG;
+    }
+  else
+    {
+      Registers[COND] = POS;
+    }
+}
+
 int main(void)
 {
 
@@ -96,45 +123,114 @@ int main(void)
 	{
 	case ADD:
 	  {
+	    uint16 DestReg = (Instruction & 0x0E00);
+	    uint16 Src1Reg = (Instruction & 0x01C0);
+	    uint16 Imm5Flag = (Instruction & 0x0020);
+
+	    if(Imm5Flag)
+	      {
+		// NOTE(l4v): Immediate mode
+		uint16 ImmValue = (Instruction & 0x001F);
+		ImmValue = SignExtend(ImmValue, 5);
+	        Registers[DestReg] = Registers[Src1Reg] + ImmValue; 
+	      }
+	    else
+	      {
+		// NOTE(l4v): Register mode
+		uint16 Src2Reg = (Instruction & 0x0007);
+		Registers[DestReg] = Registers[Src1Reg] +
+		  Registers[Src2Reg];
+	      }
+	    UpdateFlags(Registers[DestReg]);
 	  }break;
 	case AND:
 	  {
+	    uint16 DestReg = (Instruction & 0x0E00);
+	    uint16 Src1Reg = (Instruction & 0x01C0);
+	    uint16 Imm5Flag = (Instruction & 0x0020);
+
+	    if(Imm5Flag)
+	      {
+		// NOTE(l4v): Immediate mode
+		uint16 ImmValue = (Instruction & 0x001F);
+		ImmValue = SignExtend(ImmValue, 5);
+	        Registers[DestReg] = (Registers[Src1Reg] & ImmValue); 
+	      }
+	    else
+	      {
+		// NOTE(l4v): Register mode
+		uint16 Src2Reg = (Instruction & 0x0007);
+		Registers[DestReg] = (Registers[Src1Reg] &
+				      Registers[Src2Reg]);
+	      }
+	    UpdateFlags(Registers[DestReg]);
 	  }break;
 	case NOT:
 	  {
+	    uint16 DestReg = (Instruction & 0x0E00);
+	    uint16 SrcReg = (Instruction & 0x01C00);
+	    Registers[DestReg] = ~Registers[SrcReg];
+	    UpdateFlags(Registers[DestReg]);
+	    
 	  }break;
 	case BR:
 	  {
+	    uint16 PCOffset = (Instruction & 0X1FF);
+	    PCOffset = SignExtend(PCOffset, 9);
+	    uint16 CondFlag = (Instruction & 0x0700);
+	    
+	    if(CondFlag & Registers[COND])
+	      {
+		Registers[PC] += PCOffset;
+	      }
 	  }break;
 	case JMP:
 	  {
+	    uint16 BaseReg = (Instruction & 0x01C0);
+	    Registers[PC] = Registers[BaseReg];
 	  }break;
 	case JSR:
 	  {
+	    // TODO(l4v): Implement
 	  }break;
 	case LD:
 	  {
+	    // TODO(l4v): Implement
 	  }break;
 	case LDI:
 	  {
+	    // TODO(l4v): Implement
 	  }break;
 	case LDR:
 	  {
+	    uint16 DestReg = (Instruction & 0x0700);
+	    uint16 PCOffset = (Instruction & 0x01FF);
+	    PCOffset = SignExtend(PCOffset, 9);
+
+	    Registers[DestReg] = ReadMemory(
+					    ReadMemory(Registers[PC] +
+						       PCOffset));
+	    UpdateFlags(Registers[DestReg]);
 	  }break;
 	case LEA:
 	  {
+	    // TODO(l4v): Implement
 	  }break;
 	case ST:
 	  {
+	    // TODO(l4v): Implement
 	  }break;
 	case STI:
 	  {
+	    // TODO(l4v): Implement
 	  }break;
 	case STR:
 	  {
+	    // TODO(l4v): Implement
 	  }break;
 	case TRAP:
 	  {
+	    // TODO(l4v): Implement
 	  }break;
 	case RES:
 	case RTI:
